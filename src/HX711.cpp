@@ -1,20 +1,12 @@
 #include <Arduino.h>
 #include <HX711.h>
 
-HX711::HX711(uint8_t dout, uint8_t sck, gain_t gain)
+void HX711::begin()
 {
-	begin(dout, sck, gain);
-}
-
-void HX711::begin(uint8_t dout, uint8_t sck, gain_t gain)
-{
-    _sck = sck;
-	_dout = dout;
-
 	pinMode(_sck, OUTPUT);
 	pinMode(_dout, INPUT);
 
-	set_gain(gain);
+	set_gain(_gain);
 }
 
 bool HX711::is_ready()

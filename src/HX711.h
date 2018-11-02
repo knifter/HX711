@@ -20,14 +20,15 @@ public:
 		// define clock and data pin, channel, and gain factor
 		// channel selection is made by passing the appropriate gain: 128 or 64 for channel A, 32 for channel B
 		// gain: 128 or 64 for channel A; channel B works with 32 gain factor only
-		HX711(uint8_t dout, uint8_t pd_sck, gain_t gain = GAIN_128);
+		HX711(uint8_t dout, uint8_t sck, gain_t gain = GAIN_128) : 
+            _dout(dout), _sck(sck), _gain(gain) {};
 
 		HX711() {};
 
 		virtual ~HX711() {};
 
 		// Allows to set the pins and gain later than in the constructor
-		void begin(uint8_t dout, uint8_t pd_sck, gain_t gain = GAIN_128);
+		void begin();
 
 		// check if HX711 is ready
 		// from the datasheet: When output data is not ready for retrieval, digital output pin DOUT is high. Serial clock
@@ -73,9 +74,10 @@ public:
 		void power_up();
 
 	private:
-		uint8_t _sck;	// Power Down and Serial Clock Input Pin
 		uint8_t _dout;		// Serial Data Output Pin
-		uint8_t _gain;		// amplification factor
+		uint8_t _sck;	    // Power Down and Serial Clock Input Pin
+		gain_t _gain;		// amplification factor
+        
 		long _offset 		= 0;	// used for tare weight
 		float _scalefactor = 1.0;
 };
