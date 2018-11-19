@@ -100,7 +100,7 @@ float HX711::get_scale()
 
 void HX711::set_offset(long offset)
 {
-	_offset = _offset;
+	_offset = offset;
 }
 
 long HX711::get_offset() {
