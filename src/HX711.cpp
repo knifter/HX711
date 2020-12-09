@@ -39,12 +39,15 @@ long HX711::read()
 	data[1] = shiftIn(_dout, _sck, MSBFIRST);
 	data[0] = shiftIn(_dout, _sck, MSBFIRST);
 
+	// Create the same delay as shiftIn does between previous and next pulses
+	digitalRead(_dout);
+
 	// set the channel and the gain factor for the next reading using the clock pin
 	for (unsigned int i = 0; i < _gain; i++)
     {
 		digitalWrite(_sck, HIGH);
 		digitalWrite(_sck, LOW);
-	}
+	};
 
 	// Replicate the most significant bit to pad out a 32-bit signed integer
 	if (data[2] & 0x80)
