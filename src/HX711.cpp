@@ -7,19 +7,19 @@ void HX711::begin()
 	pinMode(_dout, INPUT);
 
 	set_gain(_gain);
-}
+};
 
 bool HX711::is_ready()
 {
 	return digitalRead(_dout) == LOW;
-}
+};
 
 void HX711::set_gain(gain_t gain)
 {
     _gain = gain;
 	digitalWrite(_sck, LOW);
-	read();
-}
+	read(); // read once because gainfactor is set after read..
+};
 
 long HX711::read()
 {
@@ -28,16 +28,20 @@ long HX711::read()
     {
 		// Will do nothing on Arduino but prevent resets of ESP8266 (Watchdog Issue)
 		yield();
-	}
+	};
 
-	unsigned long value = 0;
-	uint8_t data[3] = { 0 };
-	uint8_t filler = 0x00;
-
+    union
+    {
+        uint8_t data[3];
+        long value;
+    } u;
+    
 	// pulse the clock pin 24 times to read the data
-	data[2] = shiftIn(_dout, _sck, MSBFIRST);
-	data[1] = shiftIn(_dout, _sck, MSBFIRST);
-	data[0] = shiftIn(_dout, _sck, MSBFIRST);
+	u.data[2] = shiftIn(_dout, _sck, MSBFIRST);
+	u.data[1] = shiftIn(_dout, _sck, MSBFIRST);
+	u.data[0] = shiftIn(_dout, _sck, MSBFIRST);
+    // Sign extend
+	u.data[3] = (u.data[2] & 0x80) ? 0xFF : 0x00;
 
 	// Create the same delay as shiftIn does between previous and next pulses
 	digitalRead(_dout);
@@ -49,22 +53,19 @@ long HX711::read()
 		digitalWrite(_sck, LOW);
 	};
 
-	// Replicate the most significant bit to pad out a 32-bit signed integer
-	if (data[2] & 0x80)
-    {
-		filler = 0xFF;
-	} else {
-		filler = 0x00;
-	}
+	// FIXME: code below could probably be just this:
+	// return u.value;
+	// FIXME: but needs testing first
 
-	// Construct a 32-bit signed integer
-	value = ( static_cast<unsigned long>(filler) << 24
-			| static_cast<unsigned long>(data[2]) << 16
-			| static_cast<unsigned long>(data[1]) << 8
-			| static_cast<unsigned long>(data[0]) );
+    // Construct a 32-bit signed integer
+	uint32_t value = 0;
+    value |= static_cast<unsigned long>(u.data[3]) << 24;
+	value |= static_cast<unsigned long>(u.data[2]) << 16;
+	value |= static_cast<unsigned long>(u.data[1]) << 8;
+    value |= static_cast<unsigned long>(u.data[0]);
 
 	return static_cast<long>(value);
-}
+};
 
 long HX711::read_average(uint8_t times)
 {
@@ -73,9 +74,9 @@ long HX711::read_average(uint8_t times)
     {
 		sum += read();
 		yield();
-	}
+	};
 	return sum / times;
-}
+};
 
 double HX711::get_value(uint8_t times)
 {
